@@ -9,7 +9,7 @@
  * @return {AjaxBootstrapSelect|null}
  *   A new instance of this class or null if unable to instantiate.
  */
-var AjaxBootstrapSelect = function (element, options) {
+var AjaxBootstrapSelect = function(element, options) {
     var i, l, plugin = this;
     options = options || {};
 
@@ -79,34 +79,29 @@ var AjaxBootstrapSelect = function (element, options) {
         {
             from: 'ajaxResultsPreHook',
             to: 'preprocessData'
-        },
-        {
+        }, {
             from: 'ajaxSearchUrl',
             to: {
                 ajax: {
                     url: '{{{value}}}'
                 }
             }
-        },
-        {
+        }, {
             from: 'ajaxOptions',
             to: 'ajax'
-        },
-        {
+        }, {
             from: 'debug',
-            to: function (map) {
+            to: function(map) {
                 var _options = {};
                 _options.log = Boolean(plugin.options[map.from]) ? plugin.LOG_DEBUG : 0;
                 plugin.options = $.extend(true, {}, plugin.options, _options);
                 delete plugin.options[map.from];
                 plugin.log(plugin.LOG_WARNING, 'Deprecated option "' + map.from + '". Update code to use:', _options);
             }
-        },
-        {
+        }, {
             from: 'mixWithCurrents',
             to: 'preserveSelected'
-        },
-        {
+        }, {
             from: 'placeHolderOption',
             to: {
                 locale: {
@@ -116,7 +111,7 @@ var AjaxBootstrapSelect = function (element, options) {
         }
     ];
     if (deprecatedOptionsMap.length) {
-        $.map(deprecatedOptionsMap, function (map) {
+        $.map(deprecatedOptionsMap, function(map) {
             // Depreciated option detected.
             if (plugin.options[map.from]) {
                 // Map with an object. Use "{{{value}}}" anywhere in the object to
@@ -154,10 +149,17 @@ var AjaxBootstrapSelect = function (element, options) {
     }
 
     // Helper functions.
-    var matchToLowerCase = function (match, p1) { return p1.toLowerCase(); };
-    var expandObject = function (keys, value, obj) {
-        var k = [].concat(keys), l = k.length, o = obj || {};
-        if (l) { var key = k.shift(); o[key] = expandObject(k, value, o[key]); }
+    var matchToLowerCase = function(match, p1) {
+        return p1.toLowerCase();
+    };
+    var expandObject = function(keys, value, obj) {
+        var k = [].concat(keys),
+            l = k.length,
+            o = obj || {};
+        if (l) {
+            var key = k.shift();
+            o[key] = expandObject(k, value, o[key]);
+        }
         return l ? o : value;
     };
 
@@ -246,7 +248,7 @@ var AjaxBootstrapSelect = function (element, options) {
     // We need for selectpicker to be attached first. Putting the init in a
     // setTimeout is the easiest way to ensure this.
     // @todo Figure out a better way to do this (hopefully listen for an event).
-    setTimeout(function () {
+    setTimeout(function() {
         plugin.init();
     }, 500);
 };
@@ -254,12 +256,12 @@ var AjaxBootstrapSelect = function (element, options) {
 /**
  * Initializes this plugin on a selectpicker instance.
  */
-AjaxBootstrapSelect.prototype.init = function () {
+AjaxBootstrapSelect.prototype.init = function() {
     var requestDelayTimer, plugin = this;
 
     // Rebind select/deselect to process preserved selections.
     if (this.options.preserveSelected) {
-        this.selectpicker.$menu.off('click', '.actions-btn').on('click', '.actions-btn', function (e) {
+        this.selectpicker.$menu.off('click', '.actions-btn').on('click', '.actions-btn', function(e) {
             if (plugin.selectpicker.options.liveSearch) {
                 plugin.selectpicker.$searchbox.focus();
             }
@@ -295,7 +297,7 @@ AjaxBootstrapSelect.prototype.init = function () {
         .off('input propertychange');
 
     // Bind this plugin's event.
-    this.selectpicker.$searchbox.on(this.options.bindEvent, function (e) {
+    this.selectpicker.$searchbox.on(this.options.bindEvent, function(e) {
         var query = plugin.selectpicker.$searchbox.val();
 
         plugin.log(plugin.LOG_DEBUG, 'Bind event fired: "' + plugin.options.bindEvent + '", keyCode:', e.keyCode, e);
@@ -344,7 +346,7 @@ AjaxBootstrapSelect.prototype.init = function () {
             }
         }
 
-        requestDelayTimer = setTimeout(function () {
+        requestDelayTimer = setTimeout(function() {
             // Abort any previous requests.
             if (plugin.lastRequest && plugin.lastRequest.jqXHR && $.isFunction(plugin.lastRequest.jqXHR.abort)) {
                 plugin.lastRequest.jqXHR.abort();
@@ -354,7 +356,7 @@ AjaxBootstrapSelect.prototype.init = function () {
             plugin.request = new window.AjaxBootstrapSelectRequest(plugin);
 
             // Store as the previous request once finished.
-            plugin.request.jqXHR.always(function () {
+            plugin.request.jqXHR.always(function() {
                 plugin.lastRequest = plugin.request;
                 plugin.request = false;
             });
@@ -378,7 +380,7 @@ AjaxBootstrapSelect.prototype.init = function () {
  *
  * @return {void}
  */
-AjaxBootstrapSelect.prototype.log = function (type, message) {
+AjaxBootstrapSelect.prototype.log = function(type, message) {
     if (window.console && this.options.log) {
         // Ensure the logging level is always an integer.
         if (typeof this.options.log !== 'number') {
@@ -443,6 +445,26 @@ AjaxBootstrapSelect.prototype.log = function (type, message) {
     }
 };
 
+AjaxBootstrapSelect.prototype.performRequest = function(query) {
+    // Store the query.
+    plugin.previousQuery = plugin.query;
+    plugin.query = query;
+    var plugin = this;
+    // Abort any previous requests.
+    if (plugin.lastRequest && plugin.lastRequest.jqXHR && $.isFunction(plugin.lastRequest.jqXHR.abort)) {
+        plugin.lastRequest.jqXHR.abort();
+    }
+
+    // Create a new request.
+    plugin.request = new window.AjaxBootstrapSelectRequest(plugin);
+
+    // Store as the previous request once finished.
+    plugin.request.jqXHR.always(function() {
+        plugin.lastRequest = plugin.request;
+        plugin.request = false;
+    });
+}
+
 /**
  * Replaces an old value in an object or array with a new value.
  *
@@ -463,7 +485,7 @@ AjaxBootstrapSelect.prototype.log = function (type, message) {
  *
  * @return {void}
  */
-AjaxBootstrapSelect.prototype.replaceValue = function (obj, needle, value, options) {
+AjaxBootstrapSelect.prototype.replaceValue = function(obj, needle, value, options) {
     var plugin = this;
     options = $.extend({
         recursive: true,
@@ -473,7 +495,7 @@ AjaxBootstrapSelect.prototype.replaceValue = function (obj, needle, value, optio
     // The use of $.each() opposed to native loops here is beneficial
     // since obj can be either an array or an object. This helps reduce
     // the amount of duplicate code needed.
-    $.each(obj, function (k, v) {
+    $.each(obj, function(k, v) {
         if (options.limit !== false && typeof options.limit === 'number' && options.limit <= 0) {
             return false;
         }
@@ -504,7 +526,7 @@ AjaxBootstrapSelect.prototype.replaceValue = function (obj, needle, value, optio
  * @return
  *   The translated string.
  */
-AjaxBootstrapSelect.prototype.t = function (key, langCode) {
+AjaxBootstrapSelect.prototype.t = function(key, langCode) {
     langCode = langCode || this.options.langCode;
     if (this.locale[langCode] && this.locale[langCode].hasOwnProperty(key)) {
         return this.locale[langCode][key];
